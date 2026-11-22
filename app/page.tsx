@@ -1,178 +1,98 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-type Language = "en" | "hi";
-type Section = "create" | "calendar" | "jobs" | "brand";
-type Draft = { id: string; title: string; category: string; format: string; caption: string; status: string; date: string; mediaName?: string; };
+type Format = "poster" | "photo" | "post" | "video";
+type SavedPost = { id: string; format: Format; title: string; text: string; business: string; category: string; city: string; createdAt: string };
 
-const translations = {
-  en: {
-    subtitle: "Your business growth studio", create: "Create content", calendar: "Content calendar", jobs: "Jobs & services", brand: "My brand", welcome: "Good morning! What are we creating today?", welcomeText: "Make a polished post for your business, plan your content, and discover opportunities—all in one place.", newContent: "Create a post", business: "Business or service", businessPlaceholder: "e.g. Sharma Laptop Repair", category: "Category", format: "Content format", poster: "Poster / image", video: "Short video / reel", story: "Story", offer: "What should this promote?", offerPlaceholder: "e.g. Laptop repair, same-day service, call us today", location: "Location (optional)", locationPlaceholder: "City or service area", upload: "Add your own photo or video", generate: "Generate content idea", generated: "Your content draft", caption: "Caption", editCaption: "Edit caption before saving", save: "Save as draft", share: "Share", saved: "Saved drafts", calendarTitle: "Plan your week", calendarText: "Your scheduled and saved content will show up here.", findWork: "Find jobs and services", findText: "Explore opportunities shared on BEET. Search by role, skill, or city.", search: "Search jobs, skills, or city", all: "All opportunities", apply: "View opportunity", brandTitle: "Set up your brand", brandText: "Add a few details so BEET can help keep your content consistent.", brandName: "Business name", tone: "Brand voice", friendly: "Friendly", professional: "Professional", saveBrand: "Save brand profile", brandSaved: "Brand profile saved on this device", demo: "BEET Studio preview · AI generation, media creation, scheduling and social publishing need connected services and are not active in this demo.", noDrafts: "No drafts yet. Create your first post!", noJobs: "No matches. Try another search.", copied: "Caption copied!", schedule: "Scheduled", draft: "Draft", uploadHint: "Images/videos stay in this browser preview; nothing is uploaded to a server.", jobsCount: "sample opportunities", profile: "Profile", createLabel: "Create", language: "Language", locationLabel: "India-wide", overview: "Overview", allCategories: "All categories", createAnother: "Create another post", date: "Publish date", scheduleButton: "Save schedule", remove: "Delete", savedToast: "Your draft is saved on this device.", scheduleToast: "Schedule saved on this device.", source: "BEET community demo", powered: "A smarter way to create, promote and find work.",
-  },
-  hi: {
-    subtitle: "आपके कारोबार का ग्रोथ स्टूडियो", create: "कंटेंट बनाएँ", calendar: "कंटेंट कैलेंडर", jobs: "नौकरी और सेवाएँ", brand: "मेरा ब्रांड", welcome: "नमस्ते! आज क्या बनाएँ?", welcomeText: "अपने कारोबार के लिए आकर्षक पोस्ट बनाएँ, कंटेंट की योजना बनाएँ और अवसर खोजें—एक ही जगह।", newContent: "पोस्ट बनाएँ", business: "कारोबार या सेवा", businessPlaceholder: "जैसे शर्मा लैपटॉप रिपेयर", category: "कैटेगरी", format: "कंटेंट का प्रकार", poster: "पोस्टर / तस्वीर", video: "शॉर्ट वीडियो / रील", story: "स्टोरी", offer: "आप किसका प्रचार करना चाहते हैं?", offerPlaceholder: "जैसे लैपटॉप रिपेयर, उसी दिन सेवा, आज कॉल करें", location: "जगह (वैकल्पिक)", locationPlaceholder: "शहर या सेवा क्षेत्र", upload: "अपनी तस्वीर या वीडियो जोड़ें", generate: "कंटेंट आइडिया बनाएँ", generated: "आपका कंटेंट ड्राफ्ट", caption: "कैप्शन", editCaption: "सेव करने से पहले कैप्शन बदलें", save: "ड्राफ्ट सेव करें", share: "शेयर करें", saved: "सेव किए ड्राफ्ट", calendarTitle: "इस हफ्ते की योजना", calendarText: "आपका शेड्यूल और सेव किया कंटेंट यहाँ दिखेगा।", findWork: "नौकरी और सेवाएँ खोजें", findText: "BEET पर साझा किए गए अवसर देखें। काम, कौशल या शहर से खोजें।", search: "नौकरी, कौशल या शहर खोजें", all: "सभी अवसर", apply: "अवसर देखें", brandTitle: "अपना ब्रांड सेट करें", brandText: "कुछ जानकारी जोड़ें ताकि BEET आपके कंटेंट को एक जैसा रखने में मदद करे।", brandName: "कारोबार का नाम", tone: "ब्रांड की भाषा", friendly: "दोस्ताना", professional: "पेशेवर", saveBrand: "ब्रांड प्रोफाइल सेव करें", brandSaved: "ब्रांड प्रोफाइल इस डिवा��स पर सेव है", demo: "BEET Studio प्रीव्यू · AI जनरेशन, मीडिया निर्माण, शेड्यूलिंग और सोशल पोस्टिंग के लिए जुड़े हुए सर्विस चाहिए; इस डेमो में ये सक्रिय नहीं हैं।", noDrafts: "अभी कोई ड्राफ्ट नहीं। अपनी पहली पोस्ट बनाएँ!", noJobs: "कोई मेल नहीं मिला। दूसरी खोज करें।", copied: "कैप्शन कॉपी हो गया!", schedule: "शेड्यूल", draft: "ड्राफ्ट", uploadHint: "तस्वीर/वीडियो सिर्फ इस ब्राउज़र प्रीव्यू में रहेगा; सर्वर पर अपलोड नहीं होगा।", jobsCount: "नमूना अवसर", profile: "प्रोफाइल", createLabel: "बनाएँ", language: "भाषा", locationLabel: "पूरे भारत में", overview: "ओवरव्यू", allCategories: "सभी कैटेगरी", createAnother: "एक और पोस्ट बनाएँ", date: "पोस्ट की तारीख", scheduleButton: "शेड्यूल सेव करें", remove: "हटाएँ", savedToast: "ड्राफ्ट इस डिवाइस पर सेव हुआ।", scheduleToast: "शेड्यूल इस डिवाइस पर सेव हुआ।", source: "BEET कम्युनिटी डेमो", powered: "बनाएँ, प्रचार करें और काम खोजें—स्मार्ट तरीके से।",
-  },
-} satisfies Record<Language, Record<string, string>>;
+const labels = {
+  en: { create: "Create", saved: "My drafts", jobs: "Jobs & services", language: "Language", tagline: "Your work deserves to be seen.", headline: "Create something great for your business.", intro: "Write what you do. BEET helps shape it into a ready-to-share post or poster.", start: "Start creating", creator: "Create from your words", creatorHint: "Tell BEET what you offer. Choose a format and make your first draft.", business: "Business or service name", businessPlaceholder: "e.g. Sharma Laptop Repair", category: "Choose a category", matter: "What do you want to tell people?", matterHint: "e.g. I repair laptops in Jaipur. Same-day service and free diagnosis. Call 98765 43210.", city: "City or service area", cityPlaceholder: "e.g. Jaipur", poster: "Poster", photo: "Photo design", post: "Social post", video: "Video idea", generate: "Create my draft", preview: "Your preview", previewHint: "Your content will appear here", change: "Edit your words anytime", save: "Save draft", share: "Share", download: "Download poster", upload: "Add your own photo", uploadHint: "Optional · JPG or PNG", savedTitle: "Your saved drafts", empty: "Your saved drafts will appear here.", jobsTitle: "Jobs and service opportunities", search: "Search by job, skill, or city", noJobs: "No sample opportunities match your search.", demo: "BEET can prepare copy and poster designs here. AI photo/video generation and social publishing need connected services and are not enabled in this preview.", generated: "Draft created! Review it, make changes, then save or share.", savedToast: "Draft saved on this device", shareToast: "Sharing is not supported on this browser", footer: "BEET · Create, share and grow", sample: "Community sample", work: "Explore opportunities", all: "All opportunities", posterNote: "Poster download creates a simple SVG design from your text.", videoNote: "Video idea only · AI video generation will be connected later.", media: "Add a photo", mediaHint: "Use your own real photo; BEET does not create an AI image yet.", delete: "Delete", allIndia: "India-wide", },
+  hi: { create: "बनाएँ", saved: "मेरे ड्राफ्ट", jobs: "नौकरी और सेवाएँ", language: "भाषा", tagline: "आपके काम को पहचान मिलनी चाहिए।", headline: "अपने कारोबार के लिए कुछ शानदार बनाएँ।", intro: "आप क्या करते हैं, लिखें। BEET उसे शेयर करने लायक पोस्ट या पोस्टर बनाने में मदद करेगा।", start: "बनाना शुरू करें", creator: "अपने लिखे से बनाएँ", creatorHint: "BEET को बताएँ कि आप क्या सेवा देते हैं। फॉर्मेट चुनें और पहला ड्राफ्ट बनाएँ।", business: "कारोबार या सेवा का नाम", businessPlaceholder: "जैसे शर्मा लैपटॉप रिपेयर", category: "कैटेगरी चुनें", matter: "लोगों को क्या बताना चाहते हैं?", matterHint: "जैसे मैं जयपुर में लैपटॉप रिपेयर करता हूँ। उसी दिन सेवा और फ्री जाँच। कॉल करें 98765 43210।", city: "शहर या सेवा क्षेत्र", cityPlaceholder: "जैसे जयपुर", poster: "पोस्टर", photo: "फोटो डिज़ाइन", post: "सोशल पोस्ट", video: "वीडियो आइडिया", generate: "मेरा ड्राफ्ट बनाएँ", preview: "आपका प्रीव्यू", previewHint: "आपका कंटेंट यहाँ दिखेगा", change: "अपना टेक्स्ट कभी भी बदलें", save: "ड्राफ्ट सेव करें", share: "शेयर करें", download: "पोस्टर डाउनलोड करें", upload: "अपनी फोटो जोड़ें", uploadHint: "वैकल्पिक · JPG या PNG", savedTitle: "आपके सेव किए ड्राफ्ट", empty: "आपके सेव किए ड्राफ्ट यहाँ दिखेंगे।", jobsTitle: "नौकरी और सेवा के अवसर", search: "काम, कौशल या शहर से खोजें", noJobs: "इस खोज से कोई नमूना अवसर नहीं मिला।", demo: "BEET यहाँ पोस्ट का टेक्स्ट और पोस्टर डिज़ाइन तैयार कर सकता है। AI फोटो/वीडियो जनरेशन और सोशल पोस्टिंग के लिए जुड़े सर्विस चाहिए; इस प्रीव्यू में उपलब्ध नहीं हैं।", generated: "ड्राफ्ट बन गया! देखकर बदलें, फिर सेव या शेयर करें।", savedToast: "ड्राफ्ट इस डिवाइस पर सेव हुआ", shareToast: "इस ब्राउज़र में शेयर उपलब्ध नहीं है", footer: "BEET · बनाएँ, शेयर करें और आगे बढ़ें", sample: "कम्युनिटी नमूना", work: "अवसर देखें", all: "सभी अवसर", posterNote: "डाउनलोड में आपके टेक्स्ट से बना साधारण SVG पोस्टर मिलेगा।", videoNote: "अभी वीडियो आइडिया · AI वीडियो जनरेशन बाद में जोड़ा जाएगा।", media: "अपनी फोटो जोड़ें", mediaHint: "अपनी असली फोटो इस्तेमाल करें; BEET अभी AI फोटो नहीं बनाता।", delete: "हटाएँ", allIndia: "पूरे भारत में", },
+};
 
-const categories = ["Auto & Transport", "Home Services", "Repairs & Electronics", "Food & Grocery", "Health & Wellness", "Retail & Shopping", "Property & Construction", "Education & Professional", "Personal & Events", "Agriculture", "Jobs", "Other"];
-const opportunities = [
-  { title: "Delivery Driver", company: "Local logistics partner", city: "Delhi", type: "Full time", category: "Auto & Transport" },
-  { title: "AC Technician", company: "CoolCare Services", city: "Jaipur", type: "Contract", category: "Repairs & Electronics" },
-  { title: "Home Tutor — Maths", company: "BrightPath Learning", city: "Lucknow", type: "Part time", category: "Education & Professional" },
-  { title: "Electrician", company: "Verified service request", city: "Pune", type: "Service work", category: "Home Services" },
-  { title: "Farm Equipment Operator", company: "Community listing", city: "Indore", type: "Seasonal", category: "Agriculture" },
+const categoryOptions = ["Auto & Transport", "Taxi & Cab", "Petrol Pump", "Mechanic", "Dent & Paint", "Tyre Service", "Truck Driver", "Bus Service", "Electrician", "Plumber", "Carpenter", "Tile Worker", "Painter", "Furniture", "Laptop Repair", "Mobile Repair", "TV Repair", "Fridge & AC Repair", "Washing Machine Repair", "Locksmith", "Welder", "Vegetable Seller", "Milk Supplier", "Grocery Supplier", "Meat & Fish", "Water Supplier", "Restaurant", "Tiffin Service", "Bakery", "Fruit Seller", "Grain Seller", "Hospital", "Doctor", "Chemist & Pharmacy", "Ayurveda", "Gym & Fitness", "Tailor", "Laundry & Ironing", "Electronics Sales", "Shoes & Clothing", "Utensils", "Grocery Store", "Property", "Construction Labour", "Labour", "Engineer", "Home Builder", "Cement & Sand", "Plot for Sale", "Teacher & Coaching", "Computer Course", "CSC Services", "Printing", "Accountant", "Lawyer", "Salon & Barber", "Beauty Parlour", "House Help", "Driver", "Security Guard", "Event & DJ", "Farmer", "Seeds & Fertilizer", "Tractor Service", "Animal & Dairy", "Other"];
+const sampleJobs = [
+  { title: "Delivery Driver", city: "Delhi", category: "Auto & Transport" },
+  { title: "AC Technician", city: "Jaipur", category: "Repairs & Electronics" },
+  { title: "Home Tutor — Maths", city: "Lucknow", category: "Education" },
+  { title: "Electrician", city: "Pune", category: "Home Services" },
 ];
 
 export default function Home() {
-  const [language, setLanguage] = useState<Language>("en");
-  const [section, setSection] = useState<Section>("create");
+  const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [tab, setTab] = useState<"create" | "saved" | "jobs">("create");
+  const [format, setFormat] = useState<Format>("poster");
   const [business, setBusiness] = useState("");
-  const [category, setCategory] = useState(categories[0]);
-  const [format, setFormat] = useState("poster");
-  const [offer, setOffer] = useState("");
-  const [location, setLocation] = useState("");
-  const [caption, setCaption] = useState("");
-  const [mediaName, setMediaName] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
-  const [search, setSearch] = useState("");
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [brandName, setBrandName] = useState("");
+  const [category, setCategory] = useState("Laptop Repair");
+  const [matter, setMatter] = useState("");
+  const [city, setCity] = useState("");
+  const [output, setOutput] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [photoName, setPhotoName] = useState("");
+  const [drafts, setDrafts] = useState<SavedPost[]>([]);
+  const [query, setQuery] = useState("");
   const [toast, setToast] = useState("");
-
-  const t = translations[language];
+  const t = labels[language];
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("beet-language");
     if (savedLanguage === "en" || savedLanguage === "hi") setLanguage(savedLanguage);
-    try {
-      setDrafts(JSON.parse(localStorage.getItem("beet-drafts") || "[]"));
-      setBrandName(localStorage.getItem("beet-brand") || "");
-    } catch { setDrafts([]); }
+    try { setDrafts(JSON.parse(localStorage.getItem("beet-drafts-v2") || "[]")); } catch { setDrafts([]); }
   }, []);
 
-  const filteredJobs = useMemo(() => opportunities.filter((job) => `${job.title} ${job.company} ${job.city} ${job.category}`.toLowerCase().includes(search.toLowerCase())), [search]);
-
-  function notify(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2800);
-  }
-
-  function changeLanguage(value: string) {
-    const next = value as Language;
-    setLanguage(next);
-    localStorage.setItem("beet-language", next);
-  }
-
-  function makeContent() {
+  function notify(message: string) { setToast(message); window.setTimeout(() => setToast(""), 2400); }
+  function updateLanguage(value: string) { const next = value as "en" | "hi"; setLanguage(next); localStorage.setItem("beet-language", next); }
+  function createDraft() {
+    if (!matter.trim()) { document.getElementById("matter")?.focus(); return; }
     const name = business.trim() || (language === "hi" ? "आपका कारोबार" : "Your business");
-    const service = offer.trim() || (language === "hi" ? "हमारी भरोसेमंद सेवा" : "our trusted service");
-    const place = location.trim() ? ` ${language === "hi" ? "जगह:" : "Find us in"} ${location.trim()}.` : "";
-    setCaption(language === "hi"
-      ? `${name} पर ${service} उपलब्ध है। बेहतरीन सेवा और सही कीमत के लिए आज ही संपर्क करें!${place}\n\n#BEET #${category.replaceAll(" ", "")}`
-      : `${name}: ${service}. Get friendly, reliable service at a great price—contact us today!${place}\n\n#BEET #${category.replaceAll(" ", "")}`);
+    const location = city.trim() ? ` · ${city.trim()}` : "";
+    const made = language === "hi"
+      ? `${name}${location}\n${matter.trim()}\nआज ही संपर्क करें!`
+      : `${name}${location}\n${matter.trim()}\nContact us today!`;
+    setOutput(made);
+    document.getElementById("preview")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
-
-  function saveDraft(status = "Draft") {
-    if (!caption.trim()) makeContent();
-    const next: Draft = {
-      id: crypto.randomUUID(), title: offer.trim() || (language === "hi" ? "नई पोस्ट" : "New post"), category,
-      format: format === "video" ? t.video : format === "story" ? t.story : t.poster,
-      caption: caption.trim() || (language === "hi" ? `${business || "आपका कारोबार"}: ${offer || "हमारी सेवा"}। आज संपर्क करें!` : `${business || "Your business"}: ${offer || "Our service"}. Contact us today!`),
-      status, date: new Date().toISOString().slice(0, 10), mediaName: mediaName || undefined,
-    };
-    const updated = [next, ...drafts];
-    setDrafts(updated);
-    localStorage.setItem("beet-drafts", JSON.stringify(updated));
-    notify(t.savedToast);
+  function saveDraft() {
+    const text = output || matter.trim();
+    if (!text) { createDraft(); return; }
+    const item: SavedPost = { id: crypto.randomUUID(), format, title: matter.trim().slice(0, 55) || t.poster, text, business, category, city, createdAt: new Date().toLocaleDateString() };
+    const next = [item, ...drafts]; setDrafts(next); localStorage.setItem("beet-drafts-v2", JSON.stringify(next)); notify(t.savedToast);
   }
-
-  function handleUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setMediaName(file.name);
-    setMediaUrl(URL.createObjectURL(file));
+  async function share() {
+    const text = output || matter;
+    try { if (navigator.share) await navigator.share({ title: business || "BEET", text }); else { await navigator.clipboard.writeText(text); notify(t.share); } } catch { /* sharing cancelled */ }
   }
-
-  async function shareDraft(draft: Draft) {
-    try {
-      if (navigator.share) await navigator.share({ title: draft.title, text: draft.caption });
-      else {
-        await navigator.clipboard.writeText(draft.caption);
-        notify(t.copied);
-      }
-    } catch { /* User cancelled the share sheet. */ }
+  function downloadPoster() {
+    const text = (output || matter || "BEET").split("\n");
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&apos;" }[c] || c));
+    const lines = text.slice(0, 5).map((line, i) => `<text x="64" y="${250 + i * 66}" fill="white" font-family="Arial,sans-serif" font-size="${i === 0 ? 26 : 34}" font-weight="${i === 0 ? 700 : 800}">${esc(line)}</text>`).join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#ff8a4c"/><stop offset=".52" stop-color="#7347e8"/><stop offset="1" stop-color="#221344"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><circle cx="930" cy="200" r="210" fill="#d8ff45" opacity=".8"/><circle cx="70" cy="1250" r="280" fill="#fa5fa1" opacity=".55"/><text x="64" y="130" fill="white" font-family="Arial" font-size="42" font-weight="900">BEET</text>${lines}<text x="64" y="1230" fill="white" font-family="Arial" font-size="24">Create · Share · Grow</text></svg>`;
+    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    const link = document.createElement("a"); link.href = url; link.download = "beet-poster.svg"; link.click(); URL.revokeObjectURL(url);
   }
+  function removeDraft(id: string) { const next = drafts.filter((d) => d.id !== id); setDrafts(next); localStorage.setItem("beet-drafts-v2", JSON.stringify(next)); }
+  function uploadPhoto(file?: File) { if (!file) return; setPhoto(URL.createObjectURL(file)); setPhotoName(file.name); }
 
-  function deleteDraft(id: string) {
-    const updated = drafts.filter((draft) => draft.id !== id);
-    setDrafts(updated);
-    localStorage.setItem("beet-drafts", JSON.stringify(updated));
-  }
-
-  function saveBrand() {
-    localStorage.setItem("beet-brand", brandName);
-    notify(t.brandSaved);
-  }
-
-  return (
-    <main className="studio-shell" lang={language}>
-      <aside className="sidebar">
-        <a className="brand" href="#" aria-label="BEET home"><span>BE</span>ET</a>
-        <p className="brand-subtitle">{t.subtitle}</p>
-        <div className="side-menu" role="navigation" aria-label="Studio">
-          {([["create", "✦", t.create], ["calendar", "▦", t.calendar], ["jobs", "⌕", t.jobs], ["brand", "◉", t.brand]] as [Section, string, string][]).map(([id, icon, label]) => (
-            <button key={id} className={`side-link ${section === id ? "active" : ""}`} onClick={() => setSection(id)}><span>{icon}</span>{label}</button>
-          ))}
-        </div>
-        <div className="sidebar-bottom">
-          <label className="language-control"><span>🌐 {t.language}</span><select value={language} onChange={(event) => changeLanguage(event.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
-          <div className="user-chip"><div className="avatar">B</div><div><strong>BEET</strong><small>{t.profile}</small></div></div>
-        </div>
-      </aside>
-
-      <section className="workspace">
-        <header className="topbar"><div><span className="breadcrumb">BEET Studio</span><span className="beta-tag">BETA</span></div><button className="profile-button" onClick={() => setSection("brand")}>◉ <span>{brandName || t.profile}</span></button></header>
-        <div className="page-content">
-          {section === "create" && <>
-            <div className="welcome-row"><div><p className="eyebrow">{t.createLabel} · BEET STUDIO</p><h1>{t.welcome}</h1><p className="muted">{t.welcomeText}</p></div><div className="welcome-sparkle">✦</div></div>
-            <div className="studio-grid">
-              <section className="panel editor-panel">
-                <div className="panel-heading"><div className="heading-icon">✦</div><div><h2>{t.newContent}</h2><p>{t.demo}</p></div></div>
-                <label className="field-label">{t.business}<input value={business} onChange={(e) => setBusiness(e.target.value)} placeholder={t.businessPlaceholder} /></label>
-                <div className="field-row"><label className="field-label">{t.category}<select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label><label className="field-label">{t.format}<select value={format} onChange={(e) => setFormat(e.target.value)}><option value="poster">{t.poster}</option><option value="video">{t.video}</option><option value="story">{t.story}</option></select></label></div>
-                <label className="field-label">{t.offer}<textarea value={offer} onChange={(e) => setOffer(e.target.value)} placeholder={t.offerPlaceholder} rows={3} /></label>
-                <label className="field-label">{t.location}<input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t.locationPlaceholder} /></label>
-                <label className="upload-box"><span className="upload-icon">＋</span><span><strong>{t.upload}</strong><small>{mediaName || t.uploadHint}</small></span><input type="file" accept="image/*,video/*" onChange={handleUpload} /></label>
-                <button className="primary-button full-button" onClick={makeContent}>✦ {t.generate}</button>
-              </section>
-
-              <section className="panel preview-panel">
-                <div className="preview-top"><div><h2>{t.generated}</h2><p>{format === "video" ? "▶" : "▧"} {format === "video" ? t.video : format === "story" ? t.story : t.poster}</p></div><span className="preview-dot">●</span></div>
-                <div className={`creative-preview ${format}`}>
-                  {mediaUrl && (mediaUrl.startsWith("blob:") && mediaName.match(/\.(mp4|webm|mov)$/i) ? <video src={mediaUrl} controls /> : <img src={mediaUrl} alt="Uploaded preview" />)}
-                  <div className="creative-overlay"><span className="creative-kicker">{business || (language === "hi" ? "आपका कारोबार" : "YOUR BUSINESS")}</span><strong>{offer || (language === "hi" ? "अपनी सेवा यहाँ दिखाएँ" : "Showcase your service")}</strong><small>{location || (language === "hi" ? "आपके शहर में" : "Serving your area")}</small></div>
-                </div>
-                <label className="field-label caption-label">{t.caption}<textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={language === "hi" ? "पहले कंटेंट आइडिया बनाएँ…" : "Generate a content idea to start…"} rows={5} /></label>
-                <div className="preview-actions"><button className="secondary-button" onClick={() => saveDraft("Draft")}>{t.save}</button><button className="primary-button" onClick={() => saveDraft("Ready to share")}>{t.share} ↗</button></div>
-              </section>
-            </div>
-            <DraftList drafts={drafts} t={t} onShare={shareDraft} onDelete={deleteDraft} />
-          </>}
-
-          {section === "calendar" && <><div className="welcome-row"><div><p className="eyebrow">BEET STUDIO</p><h1>{t.calendarTitle}</h1><p className="muted">{t.calendarText}</p></div><div className="welcome-sparkle">▦</div></div><DraftList drafts={drafts} t={t} onShare={shareDraft} onDelete={deleteDraft} /></>}
-
-          {section === "jobs" && <><div className="welcome-row"><div><p className="eyebrow">BEET COMMUNITY</p><h1>{t.findWork}</h1><p className="muted">{t.findText}</p></div><div className="welcome-sparkle">⌕</div></div><section className="panel jobs-panel"><div className="search-box"><span>⌕</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.search} /></div><div className="job-filters"><button className="filter-chip selected">{t.all}</button><span>{filteredJobs.length} {t.jobsCount}</span></div><div className="job-list">{filteredJobs.length ? filteredJobs.map((job) => <article className="job-card" key={job.title}><div className="job-icon">{job.title[0]}</div><div className="job-details"><h3>{job.title}</h3><p>{job.company} · {job.city}</p><div className="job-tags"><span>{job.type}</span><span>{job.category}</span></div></div><button className="secondary-button" onClick={() => notify(t.demo)}>{t.apply} →</button></article>) : <p className="empty-state">{t.noJobs}</p>}</div><p className="source-note">{t.source} · {t.locationLabel}</p></section></>}
-
-          {section === "brand" && <><div className="welcome-row"><div><p className="eyebrow">BEET STUDIO</p><h1>{t.brandTitle}</h1><p className="muted">{t.brandText}</p></div><div className="welcome-sparkle">◉</div></div><section className="panel brand-panel"><div className="brand-profile-icon">{(brandName || "B")[0].toUpperCase()}</div><label className="field-label">{t.brandName}<input value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder={t.businessPlaceholder} /></label><label className="field-label">{t.category}<select>{categories.map((item) => <option key={item}>{item}</option>)}</select></label><label className="field-label">{t.tone}<select><option>{t.friendly}</option><option>{t.professional}</option></select></label><button className="primary-button" onClick={saveBrand}>{t.saveBrand}</button></section></>}
-          <footer className="footer-note">{t.powered}</footer>
-        </div>
-      </section>
-      {toast && <div className="toast" role="status">✓ {toast}</div>}
-    </main>
-  );
+  return <main className="beet-app" lang={language}>
+    <header className="site-header"><a className="logo" href="#home"><span>BE</span>ET<span className="logo-dot">.</span></a><span className="header-tag">{t.tagline}</span><nav className="top-nav"><button className={tab === "create" ? "nav-active" : ""} onClick={() => setTab("create")}>{t.create}</button><button className={tab === "saved" ? "nav-active" : ""} onClick={() => setTab("saved")}>{t.saved}</button><button className={tab === "jobs" ? "nav-active" : ""} onClick={() => setTab("jobs")}>{t.jobs}</button></nav><label className="language-select"><span>🌐</span><select aria-label={t.language} value={language} onChange={(e) => updateLanguage(e.target.value)}><option value="en">EN</option><option value="hi">हिंदी</option></select></label></header>
+    {tab === "create" && <>
+      <section id="home" className="color-hero"><div className="hero-copy"><span className="hero-pill">✦ BEET CREATOR STUDIO</span><h1>{t.headline}</h1><p>{t.intro}</p><button className="hero-cta" onClick={() => document.getElementById("creator")?.scrollIntoView({ behavior: "smooth" })}>{t.start} <span>↓</span></button><div className="hero-proof"><span>✦</span> {language === "hi" ? "पोस्टर · फोटो · पोस्ट · वीडियो आइडिया" : "Poster · Photo · Post · Video idea"}</div></div><div className="hero-art" aria-label="Colorful BEET poster examples"><div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/><div className="mini-poster poster-orange"><small>BEET · LOCAL BUSINESS</small><strong>Good work.<br/>Great service.</strong><span>Made for your community ✦</span></div><div className="mini-poster poster-purple"><small>YOUR NEXT BIG THING</small><strong>Make it<br/>happen.</strong><span>CREATE · SHARE · GROW</span></div><div className="hero-sticker">✦<small>MADE<br/>WITH BEET</small></div></div></section>
+      <section className="creator-wrap" id="creator"><div className="section-heading"><div><span className="section-kicker">01 · CREATE</span><h2>{t.creator}</h2><p>{t.creatorHint}</p></div><span className="step-badge">BEET AI · PREVIEW</span></div>
+        <div className="creator-layout"><section className="creator-card"><label className="form-label">{t.business}<input value={business} onChange={(e) => setBusiness(e.target.value)} placeholder={t.businessPlaceholder}/></label><div className="form-pair"><label className="form-label">{t.category}<select value={category} onChange={(e) => setCategory(e.target.value)}>{categoryOptions.map((item) => <option key={item}>{item}</option>)}</select></label><label className="form-label">{t.city}<input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t.cityPlaceholder}/></label></div><div className="form-label format-label">{t.format ?? (language === "hi" ? "क्या बनाना है?" : "Choose a format")}</div><div className="format-choices">{([["poster", "▧", t.poster], ["photo", "▣", t.photo], ["post", "✎", t.post], ["video", "▶", t.video]] as [Format, string, string][]).map(([id, icon, label]) => <button key={id} className={`format-choice ${format === id ? "format-selected" : ""}`} onClick={() => setFormat(id)}><span className="format-icon">{icon}</span><strong>{label}</strong><small>{id === "video" ? "Idea" : id === "post" ? "Text" : "Design"}</small></button>)}</div><label className="form-label matter-label" htmlFor="matter">{t.matter}<textarea id="matter" value={matter} onChange={(e) => setMatter(e.target.value)} placeholder={t.matterHint} rows={5}/></label>{(format === "photo" || format === "poster") && <label className="photo-upload"><span className="upload-symbol">＋</span><span><strong>{t.upload}</strong><small>{photoName || t.mediaHint}</small></span><input type="file" accept="image/*" onChange={(e) => uploadPhoto(e.target.files?.[0])}/></label>}<button className="create-button" onClick={createDraft}><span>✦</span>{t.generate}<b>→</b></button><p className="fine-print">{t.demo}</p></section>
+          <section className="preview-card" id="preview"><div className="preview-heading"><div><span className="section-kicker">02 · PREVIEW</span><h3>{t.preview}</h3></div><span className="live-dot"><i/> LIVE PREVIEW</span></div><div className={`poster-preview preview-${format}`}>
+            {photo && (format === "photo" || format === "poster") && <img className="uploaded-photo" src={photo} alt="Your uploaded business photo"/>}
+            {format === "video" && <span className="play-badge">▶</span>}
+            <div className="preview-content"><span className="preview-brand">{business || "YOUR BUSINESS"} · {category.toUpperCase()}</span><strong>{(output || matter || t.previewHint).split("\n").slice(0, 3).map((line, i) => <span key={i}>{line}</span>)}</strong><small>{city || (language === "hi" ? "आपके शहर में उपलब्ध" : "Available in your area")}</small><b className="preview-beet">BEET ✦</b></div></div><p className="preview-note">{format === "video" ? t.videoNote : t.posterNote}</p><div className="preview-buttons"><button className="save-button" onClick={saveDraft}>{t.save}</button>{format === "poster" && <button className="download-button" onClick={downloadPoster}>↓ {t.download}</button>}<button className="share-button" onClick={share}>{t.share} ↗</button></div></section></div></section>
+      <section className="saved-strip"><div><span className="section-kicker">03 · YOUR WORK</span><h2>{t.savedTitle}</h2></div><button className="text-link" onClick={() => setTab("saved")}>{t.saved} ({drafts.length}) →</button></section>
+    </>}
+    {tab === "saved" && <section className="content-page"><span className="section-kicker">BEET STUDIO</span><h1>{t.savedTitle}</h1><p className="page-subtitle">{drafts.length ? `${drafts.length} ${language === "hi" ? "ड्राफ्ट" : "drafts"}` : t.empty}</p>{drafts.length > 0 && <div className="saved-grid">{drafts.map((d) => <article className="saved-card" key={d.id}><span className="format-chip">{d.format}</span><small>{d.category} · {d.createdAt}</small><h3>{d.title}</h3><p>{d.text}</p><div><button onClick={() => { setOutput(d.text); setMatter(d.text); setFormat(d.format); setTab("create"); }}>Edit / open</button><button onClick={() => removeDraft(d.id)}>{t.delete}</button></div></article>)}</div>}</section>}
+    {tab === "jobs" && <JobsPage language={language} query={query} setQuery={setQuery}/>}
+    <footer className="site-footer"><span className="logo"><span>BE</span>ET<span className="logo-dot">.</span></span><span>{t.footer}</span></footer>{toast && <div className="toast-message" role="status">✓ {toast}</div>}
+  </main>;
 }
 
-function DraftList({ drafts, t, onShare, onDelete }: { drafts: Draft[]; t: Record<string, string>; onShare: (draft: Draft) => void; onDelete: (id: string) => void }) {
-  return <section className="draft-section"><div className="section-title"><div><p className="eyebrow">YOUR CONTENT</p><h2>{t.saved}</h2></div><span className="count-badge">{drafts.length}</span></div>{drafts.length === 0 ? <div className="empty-card">✧<p>{t.noDrafts}</p></div> : <div className="draft-grid">{drafts.map((draft) => <article className="draft-card" key={draft.id}><div className="draft-card-top"><span className="format-tag">{draft.format}</span><span className="status-tag">{draft.status === "Draft" ? t.draft : t.schedule}</span></div><h3>{draft.title}</h3><p className="draft-category">{draft.category}{draft.mediaName ? ` · ${draft.mediaName}` : ""}</p><p className="draft-caption">{draft.caption}</p><div className="draft-actions"><button className="secondary-button" onClick={() => onShare(draft)}>{t.share} ↗</button><button className="delete-button" onClick={() => onDelete(draft.id)}>{t.remove}</button></div></article>)}</div>}</section>;
+function JobsPage({ language, query, setQuery }: { language: "en" | "hi"; query: string; setQuery: (s: string) => void }) {
+  const t = labels[language];
+  const matching = sampleJobs.filter((j) => `${j.title} ${j.city} ${j.category}`.toLowerCase().includes(query.toLowerCase()));
+  return <section className="content-page"><span className="section-kicker">BEET COMMUNITY</span><h1>{t.jobsTitle}</h1><p className="page-subtitle">{language === "hi" ? "अपने आस-पास के काम और अवसर खोजें।" : "Find work and opportunities in your community."}</p><div className="job-search"><span>⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.search}/></div><div className="opportunity-list">{matching.length ? matching.map((j) => <article key={j.title} className="opportunity-card"><span className="opportunity-icon">✦</span><div><h3>{j.title}</h3><p>{j.category} · {j.city} · {t.sample}</p></div><button className="text-link">{language === "hi" ? "देखें →" : "View →"}</button></article>) : <p>{t.noJobs}</p>}</div><p className="fine-print">Sample listings only · External social-media posts are not automatically copied.</p></section>;
 }
