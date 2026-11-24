@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+<defs><linearGradient id="poster-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eff7eb"/><stop offset="1" stop-color="#8ebd91"/></linearGradient></defs>
+<rect width="1080" height="1350" fill="url(#poster-bg)"/>
+<circle cx="970" cy="200" r="205" fill="#d7e8ca" opacity=".72"/>
+<circle cx="110" cy="1090" r="180" fill="#d7e8ca" opacity=".55"/>
+<rect x="34" y="34" width="1012" height="1282" rx="38" fill="none" stroke="#173d25" stroke-opacity=".22" stroke-width="3"/>
+<text x="540" y="112" text-anchor="middle" fill="#173d25" font-family="Arial,sans-serif" font-size="24" font-weight="700" letter-spacing="7">SHARMA LAPTOP REPAIR</text>
+<rect x="365" y="155" width="350" height="52" rx="26" fill="#14783d"/>
+<text x="540" y="189" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="19" font-weight="700" letter-spacing="3">SPECIAL OFFER</text>
+<path d="M365 325h350" stroke="#14783d" stroke-width="4" stroke-linecap="round"/>
+<text x="540" y="286" text-anchor="middle" fill="#14783d" font-family="Arial,sans-serif" font-size="26" font-weight="700" letter-spacing="4">AAO BEET KAREIN</text>
+<text x="540" y="517" text-anchor="middle" fill="#173d25" font-family="Noto Sans Devanagari,Arial,sans-serif" font-size="62" font-weight="700">आपके कारोबार के लिए</text><text x="540" y="599" text-anchor="middle" fill="#173d25" font-family="Noto Sans Devanagari,Arial,sans-serif" font-size="62" font-weight="700">खास ऑफर</text>
+<text x="540" y="835" text-anchor="middle" fill="#173d25" font-family="Noto Sans Devanagari,Arial,sans-serif" font-size="30"><tspan x="540" dy="0">Same-day service and free diagnosis</tspan></text>
+<rect x="300" y="1010" width="480" height="88" rx="18" fill="#14783d"/>
+<text x="540" y="1065" text-anchor="middle" fill="#ffffff" font-family="Noto Sans Devanagari,Arial,sans-serif" font-size="29" font-weight="700">आज ही संपर्क करें</text>
+<path d="M270 1160h540" stroke="#173d25" stroke-opacity=".3" stroke-width="2"/>
+<text x="540" y="1210" text-anchor="middle" fill="#173d25" font-family="Arial,sans-serif" font-size="29" font-weight="700">Sharma Laptop Repair</text>
+<text x="540" y="1254" text-anchor="middle" fill="#173d25" font-family="Arial,sans-serif" font-size="19">Jaipur</text>
+</svg>
